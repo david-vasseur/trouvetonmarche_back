@@ -1,0 +1,435 @@
+// This is your Prisma schema file,
+// learn more about Prisma schema at:
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Recurrence {
+  NONE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum BarnumRequirement {
+  REQUIRED
+  FORBIDDEN
+  OPTIONAL
+}
+
+enum ElectricityOption {
+  NONE
+  INCLUDED
+  PAID
+}
+
+enum ParkingAvailability {
+  NEARBY
+  FAR
+  NONE
+}
+
+enum UserRole {
+  EXPOSANT
+  ORGANISATEUR
+  ADMIN
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum PromotionTargetType {
+  FRANCE
+  REGION
+  DEPARTMENT
+  CITY
+  RADIUS
+}
+
+enum MarketType {
+  COVERED
+  EXTERIOR
+  BOTH
+}
+
+model MarketCategory {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  markets Market[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// MARKET
+// ─────────────────────────────────────────────
+
+model Market {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  // Adresse
+  address String?
+  zip     String?
+
+  // Localisation administrative
+  city           String
+  cityCode       String
+  department     String
+  departmentCode String
+  region         String
+  regionCode     String
+
+  // Géolocalisation
+  latitude  Float?
+  longitude Float?
+
+  // Événement
+  startAt    DateTime
+  endAt      DateTime
+  recurrence Recurrence @default(NONE)
+  recurrenceEndAt DateTime?
+
+  // Informations
+  history  Int @default(0)
+  visitors Int?
+
+  // Type de marché
+  marketType MarketType @default(EXTERIOR)
+
+  // Tarifs
+  price      Decimal?
+  standPrice Decimal?
+
+  // Contenu
+  image   String?
+  excerpt String
+  description Json
+  externalUrl String?
+  exhibitors       Int?
+  registrationsOpen Boolean @default(true)
+  standSizes       String[]
+  electricity      ElectricityOption @default(NONE)
+  barnum BarnumRequirement @default(OPTIONAL)
+  parkingAvailability ParkingAvailability @default(NONE)
+  parkingFree         Boolean @default(false)
+
+  // Statistiques
+  views Int @default(0)
+
+  // Gestionnaire / propriétaire
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  // Catégorie
+  categoryId Int
+  category   MarketCategory @relation(fields: [categoryId], references: [id])
+
+  // Relations
+  tags          Tag[]
+  openingHours  MarketOpeningHour[]
+  promotions    Promotion[]
+  favorites     Favorite[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cityCode, startAt])
+  @@index([departmentCode, startAt])
+  @@index([regionCode, startAt])
+  @@index([startAt, id])
+  @@index([userId])
+  @@index([categoryId])
+}
+
+// ─────────────────────────────────────────────
+// HORAIRES D'OUVERTURE
+// ─────────────────────────────────────────────
+
+model MarketOpeningHour {
+  id       Int @id @default(autoincrement())
+
+  marketId Int
+  market   Market @relation(fields: [marketId],references: [id],onDelete: Cascade)
+
+  date     DateTime
+  openAt   String
+  closeAt  String
+
+  @@index([marketId, date])
+}
+
+// ─────────────────────────────────────────────
+// TAG
+// ─────────────────────────────────────────────
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  slug String @unique
+
+  // Marchés
+  markets Market[]
+
+  // Profils professionnels
+  professionalProfiles ProfessionalTag[]
+}
+
+// ─────────────────────────────────────────────
+// TYPE D'ACTIVITÉ
+// ─────────────────────────────────────────────
+
+model ActivityType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  slug String @unique
+
+  profiles ProfessionalProfile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// THÈME / UNIVERS
+// ─────────────────────────────────────────────
+
+model Theme {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  slug String @unique
+
+  profiles ProfessionalProfile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────────
+
+model User {
+  id Int @id @default(autoincrement())
+
+  // Auth
+  email           String     @unique
+  passwordHash    String
+  roles           UserRole[] @default([EXPOSANT])
+  emailVerifiedAt DateTime?
+
+  // Identité
+  firstName String
+  lastName  String
+  phone     String?
+  avatarUrl String?
+
+  // Profil professionnel
+  profile ProfessionalProfile?
+
+  // Relations métier
+  markets    Market[]
+  promotions Promotion[]
+  favorites  Favorite[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+// ─────────────────────────────────────────────
+// PROMOTION / MISE EN AVANT
+// ─────────────────────────────────────────────
+
+model Promotion {
+  id Int @id @default(autoincrement())
+
+  // Propriétaire de la promotion
+  userId Int
+  user   User @relation(fields: [userId],references: [id])
+
+  // Marché mis en avant
+  marketId Int
+  market   Market @relation(fields: [marketId],references: [id],onDelete: Cascade)
+
+  // Période de mise en avant
+  startAt DateTime
+  endAt   DateTime
+
+  // Ciblage géographique
+  targetType PromotionTargetType
+
+  regionCode     String?
+  departmentCode String?
+  cityCode       String?
+
+  latitude  Float?
+  longitude Float?
+  radiusKm  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([marketId])
+  @@index([startAt, endAt])
+}
+
+// ─────────────────────────────────────────────
+// FAVORIS
+// ─────────────────────────────────────────────
+
+model Favorite {
+  id Int @id @default(autoincrement())
+
+  // Utilisateur ayant ajouté le marché en favori
+  userId Int
+  user   User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
+  // Marché ajouté aux favoris
+  marketId Int
+  market   Market @relation(fields: [marketId],references: [id],onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Un utilisateur ne peut ajouter
+  // qu'une seule fois le même marché
+  @@unique([userId, marketId])
+  @@index([userId])
+  @@index([marketId])
+}
+
+// ─────────────────────────────────────────────
+// PROFIL PROFESSIONNEL
+// ─────────────────────────────────────────────
+
+model ProfessionalProfile {
+  id Int @id @default(autoincrement())
+
+  userId Int @unique
+  user   User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
+  // ─────────────────────────────────────────
+  // Boutique / activité
+  // ─────────────────────────────────────────
+
+  shopName    String?
+  description String?
+
+  logoUrl       String?
+  coverImageUrl String?
+
+  // ─────────────────────────────────────────
+  // Activité
+  // ─────────────────────────────────────────
+
+  activityTypeId Int?
+  activityType   ActivityType? @relation(fields: [activityTypeId],references: [id])
+
+  themeId Int?
+  theme   Theme? @relation(fields: [themeId],references: [id])
+
+  tags ProfessionalTag[]
+
+  // ─────────────────────────────────────────
+  // Web
+  // ─────────────────────────────────────────
+
+  website String?
+
+  // ─────────────────────────────────────────
+  // Réseaux sociaux
+  // ─────────────────────────────────────────
+
+  instagram String?
+  facebook  String?
+  tiktok    String?
+  youtube   String?
+
+  // ─────────────────────────────────────────
+  // Entreprise
+  // ─────────────────────────────────────────
+
+  companyName String?
+  siret       String?
+
+  // ─────────────────────────────────────────
+  // Adresse professionnelle
+  // ─────────────────────────────────────────
+
+  address String?
+  zip     String?
+
+  city String?
+
+  // Code officiel de la commune
+  cityCode String?
+
+  // Localisation administrative
+  departmentCode String?
+  regionCode     String?
+
+  // Géolocalisation
+  latitude  Float?
+  longitude Float?
+
+  // ─────────────────────────────────────────
+  // Timestamps
+  // ─────────────────────────────────────────
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cityCode])
+  @@index([departmentCode])
+  @@index([regionCode])
+  @@index([activityTypeId])
+  @@index([themeId])
+}
+
+// ─────────────────────────────────────────────
+// PROFIL PROFESSIONNEL ↔ TAG
+// ─────────────────────────────────────────────
+
+model ProfessionalTag {
+  profileId Int
+  tagId     Int
+
+  profile ProfessionalProfile @relation(fields: [profileId],references: [id],onDelete: Cascade)
+
+  tag Tag @relation(fields: [tagId],references: [id],onDelete: Cascade)
+
+  // Un tag une seule fois par profil
+  @@id([profileId, tagId])
+
+  @@index([tagId])
+  @@index([profileId])
+}
