@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: trouvetonmarche_back
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - trouvetonmarche-network
+      - postgres-network
+
+networks:
+  trouvetonmarche-network:
+    external: true
+  postgres-network:
+    external: true
