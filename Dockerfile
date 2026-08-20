@@ -1,8 +1,8 @@
 # Stage 1 : builder
-FROM node:22.21.0-bookworm-slim AS builder
+FROM node:25.2.1-bookworm-slim AS builder
 
 WORKDIR /usr/src/app
-RUN apt-get update -y && apt-get install -y openssl
+RUN apt-get update -y && apt-get install -y openssl curl nano && rm -rf /var/lib/apt/lists/*
 
 # Installer dépendances
 COPY package*.json ./
