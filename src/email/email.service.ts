@@ -6,6 +6,7 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
 
         async sendResetPasswordEmail(email: string, resetUrl: string) {
             const payload = {
+                from: "noreply@ez-task.fr",
                 to: email,
                 resetUrl: resetUrl,
                 // #TODO Changer le appName quand le nom de domaine sera créé
