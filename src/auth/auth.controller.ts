@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { RetrieveDto } from './dto/retrievePassword.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -14,6 +15,12 @@ export class AuthController {
     @HttpCode(HttpStatus.CREATED)
         async register(@Body() registerDto: RegisterDto) {
             return this.authService.register(registerDto);
+        }
+
+    @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
+        async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+            return this.authService.resetPassword(resetPasswordDto)
         }
 
     @Post('login')

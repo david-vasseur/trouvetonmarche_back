@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
@@ -8,6 +8,7 @@ import { UserRole } from '../../lib/generated/prisma/client';
 import { RetrieveDto } from './dto/retrievePassword.dto';
 import * as crypto from 'node:crypto';
 import { EmailService } from 'src/email/email.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -150,4 +151,43 @@ export class AuthService {
         await this.emailService.sendResetPasswordEmail(user.email, resetUrl);
     }
 
+    async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+        const { token, password } = dto;
+
+        // #1 On hash le token reçu pour le comparer avec celui en bdd
+        const hashedToken = crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+        // #2 On cherche le token en base
+        const resetRecord = await this.prisma.passwordResetToken.findFirst({
+            where: { tokenHash: hashedToken },
+        });
+
+        // #3 Validations strictes avec des vraies exceptions (fini les return silencieux !)
+        if (!resetRecord || resetRecord.used) {
+            throw new BadRequestException('Le lien de réinitialisation est invalide ou a déjà été utilisé.');
+        }
+
+        if (resetRecord.expiresAt < new Date()) {
+            throw new BadRequestException('Le lien de réinitialisation a expiré. Veuillez refaire une demande.');
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // #4 Transaction Prisma : On met à jour le mot de passe ET on invalide le token en même temps
+        await this.prisma.$transaction([
+            this.prisma.user.update({
+                where: { id: resetRecord.userId },
+                data: { passwordHash: hashedPassword },
+            }),
+            this.prisma.passwordResetToken.update({
+                where: { id: resetRecord.id },
+                data: { used: true }, // Empêche la réutilisation du token
+            }),
+        ]);
+
+        return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
+    }
 }
