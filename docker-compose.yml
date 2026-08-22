@@ -10,9 +10,12 @@ services:
     networks:
       - trouvetonmarche-network
       - postgres-network
+      - resend-api-gateway-network
 
 networks:
   trouvetonmarche-network:
     external: true
   postgres-network:
+    external: true
+  resend-api-gateway-network:
     external: true

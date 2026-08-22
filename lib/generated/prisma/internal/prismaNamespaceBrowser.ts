@@ -61,7 +61,8 @@ export const ModelName = {
   Promotion: 'Promotion',
   Favorite: 'Favorite',
   ProfessionalProfile: 'ProfessionalProfile',
-  ProfessionalTag: 'ProfessionalTag'
+  ProfessionalTag: 'ProfessionalTag',
+  PasswordResetToken: 'PasswordResetToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -262,6 +263,18 @@ export const ProfessionalTagScalarFieldEnum = {
 } as const
 
 export type ProfessionalTagScalarFieldEnum = (typeof ProfessionalTagScalarFieldEnum)[keyof typeof ProfessionalTagScalarFieldEnum]
+
+
+export const PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  used: 'used',
+  createdAt: 'createdAt'
+} as const
+
+export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
 
 
 export const SortOrder = {

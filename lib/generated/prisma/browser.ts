@@ -72,3 +72,8 @@ export type ProfessionalProfile = Prisma.ProfessionalProfileModel
  * 
  */
 export type ProfessionalTag = Prisma.ProfessionalTagModel
+/**
+ * Model PasswordResetToken
+ * 
+ */
+export type PasswordResetToken = Prisma.PasswordResetTokenModel

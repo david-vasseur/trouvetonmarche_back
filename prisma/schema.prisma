@@ -257,6 +257,7 @@ model User {
   markets    Market[]
   promotions Promotion[]
   favorites  Favorite[]
+  passwordResetTokens PasswordResetToken[]
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -432,4 +433,16 @@ model ProfessionalTag {
 
   @@index([tagId])
   @@index([profileId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    Int      
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
 }

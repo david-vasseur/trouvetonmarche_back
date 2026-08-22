@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MarketModule } from './market/market.module';
 import { UserModule } from './user/user.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
 	imports: [
@@ -13,7 +14,7 @@ import { UserModule } from './user/user.module';
 			isGlobal: true, // Rendre les variables accessibles partout
 		}),
 		PrismaModule, 
-		AuthModule, MarketModule, UserModule
+		AuthModule, MarketModule, UserModule, EmailModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

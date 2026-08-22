@@ -4,6 +4,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { RetrieveDto } from './dto/retrievePassword.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -11,22 +12,28 @@ export class AuthController {
 
     @Post('register')
     @HttpCode(HttpStatus.CREATED)
-    async register(@Body() registerDto: RegisterDto) {
-        return this.authService.register(registerDto);
-    }
+        async register(@Body() registerDto: RegisterDto) {
+            return this.authService.register(registerDto);
+        }
 
     @Post('login')
     @HttpCode(HttpStatus.OK)
-    async login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
-    }
+        async login(@Body() loginDto: LoginDto) {
+            return this.authService.login(loginDto);
+        }
+
+    @Post('retrieve')
+    @HttpCode(HttpStatus.OK)
+        async retrievePassword(@Body() retrieveDto: RetrieveDto) {
+            return this.authService.retrievePassword(retrieveDto);
+        }
 
     @UseGuards(JwtAuthGuard)
     @Get('profile')
-    async getProfile(@CurrentUser() jwtPayload: { sub: number }) {
-        // jwtPayload.sub contient l'ID de l'utilisateur extrait du token
-        // On va chercher les vraies données fraîches en base
-        return this.authService.getProfile(jwtPayload.sub);
-    }
+        async getProfile(@CurrentUser() jwtPayload: { sub: number }) {
+            // jwtPayload.sub contient l'ID de l'utilisateur extrait du token
+            // On va chercher les vraies données fraîches en base
+            return this.authService.getProfile(jwtPayload.sub);
+        }
     
 }

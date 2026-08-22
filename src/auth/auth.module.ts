@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module'; // Assure-toi que ton PrismaModule est bien importé
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EmailService } from 'src/email/email.service';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 				signOptions: { expiresIn: '1d' }, 
 			}),
 		}),
+		EmailService
 	],
 	controllers: [AuthController],
 	providers: [AuthService],

@@ -5,12 +5,16 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { UserRole } from '../../lib/generated/prisma/client'; 
+import { RetrieveDto } from './dto/retrievePassword.dto';
+import * as crypto from 'node:crypto';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
+        private emailService: EmailService
     ) {}
 
     async register(dto: RegisterDto) {
@@ -101,4 +105,49 @@ export class AuthService {
 
         return user;
     }
+
+    async retrievePassword(dto: RetrieveDto): Promise<void> {
+        const { email } = dto;
+
+        // 1. Chercher l'utilisateur par son email
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+        });
+
+        // 🔒 ANTI-ÉNUMÉRATION : 
+        // Si l'utilisateur n'existe pas, on s'arrête net et on renvoie un succès (200/204) 
+        // pour ne pas fuiter l'information, mais on ne fait rien de plus.
+        if (!user) {
+            return; 
+        }
+
+        // 2. Générer le token brut
+        const rawToken = crypto.randomBytes(32).toString('hex');
+
+        // 3. Hasher le token pour la BDD
+        const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
+
+        // 4. Expiration (15 minutes)
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        // 5. Sauvegarder le token hashé
+        await this.prisma.passwordResetToken.create({
+            data: {
+                tokenHash,
+                userId: user.id,
+                expiresAt,
+            },
+        });
+
+        // 6. Construire l'URL sécurisée
+        // #TODO changer l'url reelle au bon moment 
+        const resetUrl = `https://ez-task.fr/reset-password?token=${rawToken}`;
+
+        // 7. Envoyer via le micro-service Resend
+        await this.emailService.sendResetPasswordEmail(user.email, resetUrl);
+    }
+
 }
