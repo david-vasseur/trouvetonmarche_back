@@ -17,7 +17,7 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-api-key': process.env.INTERNAL_SERVICE_KEY ?? '',
+                        'x-internal-api-key': process.env.INTERNAL_SERVICE_KEY ?? '',
                     },
                     body: JSON.stringify(payload),
                 });
