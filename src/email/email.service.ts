@@ -13,7 +13,7 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
             };
 
             try {
-                const response = await fetch(`${process.env.RESEND_PROXY_URL}/password-reset`, {
+                const response = await fetch(`${process.env.RESEND_PROXY_URL}/mail/password-reset`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
