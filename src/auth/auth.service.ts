@@ -145,7 +145,7 @@ export class AuthService {
 
         // 6. Construire l'URL sécurisée
         // #TODO changer l'url reelle au bon moment 
-        const resetUrl = `https://ez-task.fr/reset-password?token=${rawToken}`;
+        const resetUrl = `https://ez-task.fr/login/reset-password?token=${rawToken}`;
 
         // 7. Envoyer via le micro-service Resend
         await this.emailService.sendResetPasswordEmail(user.email, resetUrl);
